@@ -3,7 +3,7 @@ const Job = require("../models/Job");
 // GET /api/search?q=&location=&salaryMin=&salaryMax=&experience=
 const searchJobs = async (req, res, next) => {
   try {
-    const { q, location, salaryMin, salaryMax, jobType, page = 1, limit = 20 } = req.query;
+    const { q, location, salaryMin, salaryMax, jobType, page = 1, limit = 10 } = req.query;
 
     const filter = { status: "open" };
     if (q) filter.$text = { $search: q };

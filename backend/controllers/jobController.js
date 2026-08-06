@@ -41,7 +41,7 @@ const createJob = async (req, res, next) => {
 // GET /api/jobs  (public listing, with basic filters)
 const getJobs = async (req, res, next) => {
   try {
-    const { category, location, jobType, status = "open", page = 1, limit = 20 } = req.query;
+    const { category, location, jobType, status = "open", page = 1, limit = 10 } = req.query;
     const filter = { status };
     if (category) filter.category = category;
     if (location) filter.location = new RegExp(location, "i");
