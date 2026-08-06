@@ -14,7 +14,7 @@ export default function Onboarding({ onLogin, onRegister }) {
               <path d="M10 2L3 6v7l5 3 7-3.5L3 8.5V15l7 3.5 5-3V4z" />
             </svg>
           </div>
-          <span className="lp-brand-name">MyProject</span>
+          <span className="lp-brand-name">CareerNest</span>
         </div>
 
         {/* Illustration */}
