@@ -1,36 +1,88 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./dashboard.css";
 import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
 import StatCard from "../components/StatCard";
 import JobCard from "../components/JobCard";
+import api from "../api/axios";
 
-const RECENT_JOBS = [
-  { title: "Frontend Developer", company: "TCS", location: "Pune, Maharashtra", tag: "Full-time" },
-  { title: "Java Developer", company: "Infosys", location: "Bengaluru, Karnataka", tag: "Full-time" },
-  { title: "Web Developer Intern", company: "Wipro", location: "Remote", tag: "Internship" },
-];
-
-const ALL_JOBS = [
-  ...RECENT_JOBS,
-  { title: "Backend Developer", company: "Accenture", location: "Hyderabad, Telangana", tag: "Full-time" },
-];
-
-const APPLICATIONS = [
-  { job: { title: "Frontend Developer", company: "TCS" }, status: "Under Review" },
-  { job: { title: "Java Developer", company: "Infosys" }, status: "Interview Scheduled" },
-];
+const STATUS_LABELS = {
+  applied: "Applied",
+  shortlisted: "Shortlisted",
+  interview: "Interview Scheduled",
+  hired: "Hired",
+  rejected: "Rejected",
+  withdrawn: "Withdrawn",
+};
 
 function Dashboard({ onLogout, studentName = "Student" }) {
   const [activeTab, setActiveTab] = useState("home");
+  const [stats, setStats] = useState({ totalApplications: 0, statusCounts: [] });
+  const [recentJobs, setRecentJobs] = useState([]);
+  const [allJobs, setAllJobs] = useState([]);
+  const [applications, setApplications] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadDashboardData() {
+      try {
+        const [dashboardRes, jobsRes, applicationsRes] = await Promise.all([
+          api.get("/dashboard"),
+          api.get("/jobs?limit=6&status=open"),
+          api.get("/applications/my"),
+        ]);
+
+        if (cancelled) return;
+
+        setStats(dashboardRes.data);
+        setRecentJobs(jobsRes.data.jobs.slice(0, 3));
+        setAllJobs(jobsRes.data.jobs);
+
+        const mappedApplications = applicationsRes.data.map((app) => ({
+          job: {
+            title: app.jobId?.title || "Untitled role",
+            company: app.jobId?.employerId?.companyName || "Unknown company",
+            location: app.jobId?.location,
+          },
+          status: STATUS_LABELS[app.status] || app.status,
+        }));
+        setApplications(mappedApplications);
+      } catch (err) {
+        console.error("Failed to load dashboard data:", err);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    loadDashboardData();
+
+    // Poll every 30s so the dashboard stays "real-time" without a full page reload
+    const interval = setInterval(loadDashboardData, 30000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, []);
+
+  const shortlistedCount =
+    stats.statusCounts?.find((s) => s._id === "shortlisted")?.count || 0;
+  const interviewCount =
+    stats.statusCounts?.find((s) => s._id === "interview")?.count || 0;
+
+  const mapJobForCard = (job) => ({
+    title: job.title,
+    company: job.employerId?.companyName || "Unknown company",
+    location: job.location,
+    tag: job.jobType?.replace("_", "-"),
+  });
 
   return (
     <div className="dashboard">
-
       <Navbar studentName={studentName} />
 
       <div className="content">
-
         <Sidebar
           studentName={studentName}
           activeTab={activeTab}
@@ -39,59 +91,59 @@ function Dashboard({ onLogout, studentName = "Student" }) {
         />
 
         <main className="main">
+          {loading && <p style={{ padding: 20 }}>Loading your dashboard…</p>}
 
-          {activeTab === "home" && (
+          {!loading && activeTab === "home" && (
             <>
               <div className="cards">
-                <StatCard value="120" label="Total Jobs" />
-                <StatCard value="18" label="Applied" />
-                <StatCard value="12" label="Saved" />
+                <StatCard value={stats.totalApplications ?? 0} label="Total Applications" />
+                <StatCard value={shortlistedCount} label="Shortlisted" />
+                <StatCard value={interviewCount} label="Interviews" />
               </div>
 
               <div className="recent">
                 <h3>Recent Jobs</h3>
                 <div className="job-list">
-                  {RECENT_JOBS.map((job) => (
-                    <JobCard key={job.title} job={job} />
+                  {recentJobs.length === 0 && <p>No open jobs right now.</p>}
+                  {recentJobs.map((job) => (
+                    <JobCard key={job._id} job={mapJobForCard(job)} />
                   ))}
                 </div>
               </div>
             </>
           )}
 
-          {activeTab === "jobs" && (
+          {!loading && activeTab === "jobs" && (
             <div className="recent">
               <h3>All Jobs</h3>
               <div className="job-list">
-                {ALL_JOBS.map((job) => (
-                  <JobCard key={job.title} job={job} />
+                {allJobs.map((job) => (
+                  <JobCard key={job._id} job={mapJobForCard(job)} />
                 ))}
               </div>
             </div>
           )}
 
-          {activeTab === "applications" && (
+          {!loading && activeTab === "applications" && (
             <div className="recent">
               <h3>My Applications</h3>
               <div className="job-list">
-                {APPLICATIONS.map((app) => (
-                  <JobCard key={app.job.title} job={app.job} status={app.status} />
+                {applications.length === 0 && <p>You haven't applied to any jobs yet.</p>}
+                {applications.map((app, i) => (
+                  <JobCard key={i} job={app.job} status={app.status} />
                 ))}
               </div>
             </div>
           )}
 
-          {activeTab === "profile" && (
+          {!loading && activeTab === "profile" && (
             <div className="recent">
               <h3>My Profile</h3>
               <p>Profile details go here.</p>
             </div>
           )}
-
         </main>
-
       </div>
-
     </div>
   );
 }
