@@ -37,7 +37,7 @@ const ROLES = [
   },
 ];
 
-export default function Login({ onLogin, onNavigate }) {
+export default function Login({ onLogin, onNavigateSignup }) {
   const [active, setActive] = useState("student");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -233,9 +233,9 @@ export default function Login({ onLogin, onNavigate }) {
               <a
                 href="#"
                 onClick={(e) => {
-                  e.preventDefault();
-                  onNavigate?.("signup");
-                }}
+                 e.preventDefault();
+                 onNavigateSignup?.();
+              }}
                 className="lp-footer-link"
               >
                 Create an account
