@@ -15,7 +15,7 @@ const ROLES = [
     key: "student",
     label: "Student",
     icon: GraduationCap,
-    idLabel: "College email",
+    idLabel: "Student ID / email",
     idPlaceholder: "you@university.edu",
     cta: "Enter as student",
   },
@@ -23,7 +23,7 @@ const ROLES = [
     key: "company",
     label: "Company",
     icon: Building2,
-    idLabel: "Work email",
+    idLabel: "Company Email",
     idPlaceholder: "recruiter@company.com",
     cta: "Enter as staff",
   },
@@ -32,7 +32,7 @@ const ROLES = [
     label: "Vetern",
     icon: Briefcase,
     idLabel: "Staff ID / email",
-    idPlaceholder: "staff.id@campuslink.in",
+    idPlaceholder: "staff.id@CareerNest.in",
     cta: "Enter as Vetern",
   },
 ];
@@ -95,9 +95,9 @@ export default function Login({ onLogin, onNavigate }) {
       <div className="lp-wrap">
         <div className="lp-wordmark-row">
           <div className="lp-logo-circle">
-            <span className="lp-logo-letter">C</span>
+            <span className="lp-logo-letter">CN</span>
           </div>
-          <p className="lp-wordmark">CampusLink</p>
+          <p className="lp-wordmark">CareerNest</p>
         </div>
 
         <div className="lp-lanyard-row">
@@ -229,7 +229,7 @@ export default function Login({ onLogin, onNavigate }) {
             </form>
 
             <div className="lp-footer">
-              New to CampusLink?{" "}
+              New to CareerNest?{" "}
               <a
                 href="#"
                 onClick={(e) => {
