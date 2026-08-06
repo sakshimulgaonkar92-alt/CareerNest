@@ -48,10 +48,11 @@ const getJobs = async (req, res, next) => {
     if (jobType) filter.jobType = jobType;
 
     const jobs = await Job.find(filter)
-      .sort({ isFeatured: -1, createdAt: -1 })
-      .skip((page - 1) * limit)
-      .limit(Number(limit));
-
+  .populate("employerId", "companyName logoUrl")
+  .sort({ isFeatured: -1, createdAt: -1 })
+  .skip((page - 1) * limit)
+  .limit(Number(limit));
+  
     const total = await Job.countDocuments(filter);
     res.json({ jobs, total, page: Number(page), pages: Math.ceil(total / limit) });
   } catch (err) {

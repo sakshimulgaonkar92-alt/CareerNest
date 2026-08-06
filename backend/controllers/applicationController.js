@@ -49,9 +49,13 @@ const getMyApplications = async (req, res, next) => {
     const jobSeeker = await JobSeeker.findOne({ userId: req.user._id });
     if (!jobSeeker) return res.status(404).json({ message: "Job seeker profile not found" });
 
-    const applications = await Application.find({ jobSeekerId: jobSeeker._id })
-      .populate("jobId", "title company location status")
-      .sort({ createdAt: -1 });
+   const applications = await Application.find({ jobSeekerId: jobSeeker._id })
+  .populate({
+    path: "jobId",
+    select: "title location status employerId",
+    populate: { path: "employerId", select: "companyName" },
+  })
+  .sort({ createdAt: -1 });
 
     res.json(applications);
   } catch (err) {
