@@ -1,4 +1,6 @@
 import { useState } from "react";
+import logoMark from "../assets/careernest-logomark.png";
+
 import {
   GraduationCap,
   Building2,
@@ -95,7 +97,7 @@ export default function Login({ onLogin, onNavigateSignup }) {
       <div className="lp-wrap">
         <div className="lp-wordmark-row">
           <div className="lp-logo-circle">
-            <span className="lp-logo-letter">CN</span>
+           <img src={logoMark} alt="CareerNest" width="24" height="24" style={{ objectFit: 'contain' }} />
           </div>
           <p className="lp-wordmark">CareerNest</p>
         </div>

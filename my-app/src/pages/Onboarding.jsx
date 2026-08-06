@@ -1,4 +1,5 @@
 import './Auth.css';
+import logoMark from '../assets/careernest-logomark.png';
 
 export default function Onboarding({ onLogin, onRegister }) {
   return (
@@ -19,9 +20,13 @@ export default function Onboarding({ onLogin, onRegister }) {
 
         {/* Illustration */}
         <div className="lp-illustration">
-          <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#E8890C" strokeWidth="1.5">
-            <path d="M20 7h-3V6a3 3 0 0 0-3-3h-4a3 3 0 0 0-3 3v1H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2ZM9 6a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1H9V6Z" />
-          </svg>
+          <img
+            src={logoMark}
+            alt="CareerNest"
+            width="80"
+            height="80"
+            style={{ objectFit: 'contain' }}
+          />
         </div>
 
         <h1 className="lp-h1">Discover Your<br />Dream Job Here</h1>
