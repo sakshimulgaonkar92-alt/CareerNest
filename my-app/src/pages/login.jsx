@@ -1,4 +1,4 @@
-import { useState } from "react";
+dimport { useState } from "react";
 import logoMark from "../assets/careernest-logomark.png";
 
 import {
@@ -71,6 +71,18 @@ export default function Login({ onLogin, onNavigateSignup }) {
       });
 
       const { token, user } = res.data;
+
+     
+      const EXPECTED_ROLE = { student: "job_seeker", company: "employer", Vetern: "recruiter" };
+      if (EXPECTED_ROLE[active] && user.role !== EXPECTED_ROLE[active]) {
+      
+        setSubmitting(false);
+        setFeedback({
+          type: "error",
+          message: `This account is registered as "${user.role}", not "${role.label}". Switch tabs and try again.`,
+        });
+        return;
+      }
 
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(user));
