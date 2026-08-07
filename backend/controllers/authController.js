@@ -28,9 +28,16 @@ const signup = async (req, res, next) => {
       return res.status(400).json({ message: "name, email, password and role are required" });
     }
 
-    const existing = await User.findOne({ email });
+    if (password.length < 6) {
+      return res.status(400).json({ message: "Password must be at least 6 characters" });
+    }
+
+    const existing = await User.findOne({
+      $or: [{ email }, ...(mobile ? [{ mobile }] : [])],
+    });
     if (existing) {
-      return res.status(409).json({ message: "Email already registered" });
+      const field = existing.email === email ? "Email" : "Mobile number";
+      return res.status(409).json({ message: `${field} already registered` });
     }
 
     const user = await User.create({ name, email, mobile, password, role });
@@ -77,27 +84,52 @@ const login = async (req, res, next) => {
   }
 };
 
-// POST /api/auth/otp  { identifier: email or mobile }
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MOBILE_RE = /^\+?[0-9]{10,15}$/;
+
+// POST /api/auth/otp  { identifier: email or mobile, purpose: 'login' | 'signup' }
 const sendOtp = async (req, res, next) => {
   try {
-    const { identifier } = req.body;
+    const { identifier, purpose = "login" } = req.body;
     if (!identifier) return res.status(400).json({ message: "identifier is required" });
+
+    const isEmail = EMAIL_RE.test(identifier);
+    const isMobile = MOBILE_RE.test(identifier);
+    if (!isEmail && !isMobile) {
+      return res.status(400).json({ message: "Enter a valid email or mobile number" });
+    }
+
+    const existing = await User.findOne({ $or: [{ email: identifier }, { mobile: identifier }] });
+
+    // OTP login requires an existing, active account (BR: no silent account creation via OTP)
+    if (purpose === "login") {
+      if (!existing) {
+        return res.status(404).json({ message: "No account found for this email/mobile. Please sign up first." });
+      }
+      if (!existing.isActive) {
+        return res.status(403).json({ message: "Account is deactivated" });
+      }
+    }
 
     const code = generateOtp(identifier);
 
     // TODO: integrate real SMS/email gateway. Logging for local dev only.
-    console.log(`OTP for ${identifier}: ${code}`);
+    console.log(`OTP for ${identifier} (${purpose}): ${code}`);
 
-    res.json({ message: "OTP sent successfully" });
+    res.json({
+      message: "OTP sent successfully",
+      // Surfaced only in non-production so the demo works without a real SMS/email gateway
+      ...(process.env.NODE_ENV !== "production" ? { devCode: code } : {}),
+    });
   } catch (err) {
     next(err);
   }
 };
 
-// POST /api/auth/verify  { identifier, code }
+// POST /api/auth/verify  { identifier, code, purpose: 'login' | 'signup' }
 const verify = async (req, res, next) => {
   try {
-    const { identifier, code } = req.body;
+    const { identifier, code, purpose = "login" } = req.body;
     if (!identifier || !code) {
       return res.status(400).json({ message: "identifier and code are required" });
     }
@@ -111,18 +143,36 @@ const verify = async (req, res, next) => {
     if (!user) {
       return res.status(404).json({ message: "No account found for this identifier" });
     }
+    if (!user.isActive) {
+      return res.status(403).json({ message: "Account is deactivated" });
+    }
 
-    user.isVerified = true;
-    await user.save();
+    if (purpose === "signup" && !user.isVerified) {
+      user.isVerified = true;
+      await user.save();
+    }
 
     const token = generateToken(user._id, user.role);
     res.json({
       token,
-      user: { id: user._id, name: user.name, email: user.email, role: user.role },
+      user: { id: user._id, name: user.name, email: user.email, mobile: user.mobile, role: user.role, isVerified: user.isVerified },
     });
   } catch (err) {
     next(err);
   }
 };
 
-module.exports = { signup, login, sendOtp, verify };
+// GET /api/auth/me  (protected — used to restore/validate a session on app load)
+const getMe = async (req, res, next) => {
+  try {
+    // req.user is attached by the `protect` middleware after verifying the JWT
+    const user = req.user;
+    res.json({
+      user: { id: user._id, name: user.name, email: user.email, mobile: user.mobile, role: user.role, isVerified: user.isVerified },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = { signup, login, sendOtp, verify, getMe };

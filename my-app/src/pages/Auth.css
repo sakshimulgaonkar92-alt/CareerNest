@@ -240,6 +240,23 @@
   font-weight: 600;
 }
 
+/* OTP verification step (Signup) */
+.lp-otp-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 16px;
+}
+
+.lp-otp-actions .lp-forgot {
+  align-self: auto;
+}
+
+.lp-otp-actions .lp-forgot:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 /* Onboarding-specific */
 .lp-illustration {
   width: 140px;
