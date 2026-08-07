@@ -1,4 +1,4 @@
-dimport { useState } from "react";
+import { useState } from "react";
 import logoMark from "../assets/careernest-logomark.png";
 
 import {
