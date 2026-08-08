@@ -4,6 +4,7 @@ const Employer = require("../models/Employer");
 const Recruiter = require("../models/Recruiter");
 const generateToken = require("../utils/generateToken");
 const { generateOtp, verifyOtp } = require("../utils/otp");
+const { sendOtpEmail } = require("../utils/mailer");
 
 // Public-facing role names (used by the frontend) mapped to internal role values
 // (used everywhere else in the backend: permissions, models, etc.)
@@ -113,13 +114,22 @@ const sendOtp = async (req, res, next) => {
 
     const code = generateOtp(identifier);
 
-    // TODO: integrate real SMS/email gateway. Logging for local dev only.
-    console.log(`OTP for ${identifier} (${purpose}): ${code}`);
+    let emailSent = false;
+    if (isEmail) {
+      try {
+        emailSent = await sendOtpEmail(identifier, code, purpose);
+      } catch (mailErr) {
+        console.error("Failed to send OTP email:", mailErr.message);
+      }
+    }
+
+    if (!emailSent) {
+      console.log(`OTP for ${identifier} (${purpose}): ${code}`);
+    }
 
     res.json({
-      message: "OTP sent successfully",
-      // Surfaced only in non-production so the demo works without a real SMS/email gateway
-      ...(process.env.NODE_ENV !== "production" ? { devCode: code } : {}),
+      message: emailSent ? "OTP sent to your email" : "OTP sent successfully",
+      ...(!emailSent && process.env.NODE_ENV !== "production" ? { devCode: code } : {}),
     });
   } catch (err) {
     next(err);
